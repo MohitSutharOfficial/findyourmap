@@ -4,6 +4,7 @@
 This is a professional web-based mapping application that allows users to visualize locations, find their current position, search for places, and calculate distances between points. The application provides both straight-line distance calculations and actual road distance routing with estimated travel times.
 
 ## Features
+new map
 
 ### Interactive Map
 - Powered by Leaflet.js and OpenStreetMap
