@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FindMyMap - Professional Navigation</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="mobile.css">
+</head>
+<body>
+    <!-- Mobile toggle button for controls panel -->
+    <div class="mobile-toggle" id="mobile-toggle">
+        <i class="fas fa-bars"></i> Menu
+    </div>
+    
+    <!-- Google Maps-like search box -->
+    <div class="search-container">
+        <div class="search-box">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="search-input" class="search-input" placeholder="Search on map">
+            <button id="search-clear" class="search-clear"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+    
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Overlay for mobile sidebar -->
+            <div class="sidebar-overlay" id="sidebar-overlay"></div>
+            <!-- Controls panel -->
+            <div class="col-md-3 bg-light" id="controls-sidebar">
+                <div class="controls-panel">
+                    <div class="controls-header">
+                        <span>FindMyMap</span>
+                        <button id="close-sidebar" class="btn-close btn-close-white d-md-none"></button>
+                    </div>
+                    <div class="controls-body">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <button id="locate-btn" class="map-button">
+                                <i class="fas fa-location-arrow map-button-icon"></i> My Location
+                            </button>
+                            <button id="reset-btn" class="map-button">
+                                <i class="fas fa-redo map-button-icon"></i> Reset Map
+                            </button>
+                        </div>
+                        
+                        <hr>
+                        <div id="distance-controls">
+                            <h5 class="mb-3">Plan Your Route</h5>
+                            <div class="form-group">
+                                <label class="form-label">Starting Point:</label>
+                                <select id="point-a-select" class="form-select">
+                                    <option value="">Choose starting point</option>
+                                    <option value="user">My Current Location</option>
+                                    <option value="search">Search Result</option>
+                                    <option value="custom">Custom Point on Map</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Destination:</label>
+                                <select id="point-b-select" class="form-select">
+                                    <option value="">Choose destination</option>
+                                    <option value="user">My Current Location</option>
+                                    <option value="search">Search Result</option>
+                                    <option value="custom">Custom Point on Map</option>
+                                </select>
+                            </div>
+                            <div class="d-grid gap-2 mb-3">
+                                <button id="calculate-distance-btn" class="map-button accent">
+                                    <i class="fas fa-ruler map-button-icon"></i> Calculate Distance
+                                </button>
+                                <button id="start-navigation-btn" class="map-button primary">
+                                    <i class="fas fa-directions map-button-icon"></i> Start Navigation
+                                </button>
+                            </div>
+                            <div id="distance-result" class="alert alert-info" style="display: none;"></div>
+                        </div>
+                        
+                        <div id="navigation-controls" style="display: none;">
+                            <h5 class="mb-3">Live Navigation</h5>
+                            <div id="navigation-info" class="mb-3"></div>
+                            <div class="d-grid gap-2">
+                                <button id="voice-guidance-btn" class="map-button primary">
+                                    <i class="fas fa-volume-up map-button-icon"></i> Mute Voice
+                                </button>
+                                <button id="stop-navigation-btn" class="map-button secondary">
+                                    <i class="fas fa-stop-circle map-button-icon"></i> Stop Navigation
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Map container -->
+            <div class="col-md-9 p-0">
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Add mobile toggle script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile sidebar toggle functionality
+            const mobileToggle = document.getElementById('mobile-toggle');
+            const controlsSidebar = document.getElementById('controls-sidebar');
+            const closeSidebar = document.getElementById('close-sidebar');
+            const mapElement = document.getElementById('map');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
+            
+            function toggleSidebar(show) {
+                if (show === undefined) {
+                    controlsSidebar.classList.toggle('active');
+                    sidebarOverlay.style.display = controlsSidebar.classList.contains('active') ? 'block' : 'none';
+                } else if (show) {
+                    controlsSidebar.classList.add('active');
+                    sidebarOverlay.style.display = 'block';
+                } else {
+                    controlsSidebar.classList.remove('active');
+                    sidebarOverlay.style.display = 'none';
+                }
+            }
+            
+            if (mobileToggle && controlsSidebar) {
+                mobileToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleSidebar();
+                });
+            }
+            
+            if (closeSidebar && controlsSidebar) {
+                closeSidebar.addEventListener('click', function() {
+                    toggleSidebar(false);
+                });
+            }
+            
+            // Close sidebar when clicking on map
+            if (mapElement && controlsSidebar) {
+                mapElement.addEventListener('click', function() {
+                    if (window.innerWidth <= 768 && controlsSidebar.classList.contains('active')) {
+                        toggleSidebar(false);
+                    }
+                });
+            }
+            
+            // Close sidebar when clicking on overlay
+            if (sidebarOverlay && controlsSidebar) {
+                sidebarOverlay.addEventListener('click', function() {
+                    toggleSidebar(false);
+                });
+            }
+            
+            // Add CSS for toast notifications
+            const style = document.createElement('style');
+            style.textContent = `
+                .toast-notification {
+                    position: fixed;
+                    bottom: 24px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background-color: rgba(50, 50, 50, 0.9);
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    min-width: 200px;
+                    max-width: 80%;
+                }
+                
+                .toast-icon {
+                    margin-right: 12px;
+                }
+                
+                .toast-success .toast-icon {
+                    color: #0F9D58;
+                }
+                
+                .toast-error .toast-icon {
+                    color: #DB4437;
+                }
+                
+                .toast-info .toast-icon {
+                    color: #4285F4;
+                }
+                
+                .toast-warning .toast-icon {
+                    color: #F4B400;
+                }
+                
+                @keyframes slide-in {
+                    from { transform: translate(-50%, 100%); opacity: 0; }
+                    to { transform: translate(-50%, 0); opacity: 1; }
+                }
+                
+                @keyframes slide-out {
+                    from { transform: translate(-50%, 0); opacity: 1; }
+                    to { transform: translate(-50%, 100%); opacity: 0; }
+                }
+                
+                .slide-in {
+                    animation: slide-in 0.3s ease forwards;
+                }
+                
+                .slide-out {
+                    animation: slide-out 0.3s ease forwards;
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="routing.js"></script>
+    <script src="navigation.js"></script>
+    <script src="script.js"></script>
+    <script src="mobile.js"></script>
+    <script src="direction-indicators.js"></script>
+    
+</body>
+</html>
