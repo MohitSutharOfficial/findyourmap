@@ -338,7 +338,7 @@ body {
 
 .map-layer-btn.active {
     background: var(--primary-color);
-    color: white;
+    color: rgb(255, 255, 255);
 }
 
 /* Mobile responsiveness */
